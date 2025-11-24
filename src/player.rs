@@ -5,6 +5,7 @@ const TILE_SIZE: u32 = 64; //64x64 tiles
 const WALK_FRAMES: usize = 9; //9 columns per walking row
 const MOVE_SPEED: f32 = 140.0; // pixels per second
 const ANIM_DT: f32 = 0.1; // seconds per frame (~10 fps)
+const PLAYER_Z: f32 = 20.0;
 
 // stores Player entities
 // a component is a piece of data attached to an entity
@@ -43,9 +44,9 @@ fn spawn_player(
     // 12 rows
     let texture = asset_server.load("player.png");
     let layout = atlas_layouts.add(TextureAtlasLayout::from_grid(
-        UVec2::splat(TILE_SIZE),
-        WALK_FRAMES as u32,
-        12, 
+        UVec2::splat(TILE_SIZE), 
+        WALK_FRAMES as u32,         // columns used for walking frames
+        12,                             // at least 12 rows available
         None,
         None,
     ));
@@ -62,7 +63,8 @@ fn spawn_player(
                 index: start_index,
             },
         ),
-        Transform::from_translation(Vec3::ZERO),
+        // put player above map, and resize by 0.8
+        Transform::from_translation(Vec3::new(0., 0., PLAYER_Z)).with_scale(Vec3::splat(0.8)),
         Player,
         AnimationState { facing, moving: false, was_moving: false },
         AnimationTimer(Timer::from_seconds(ANIM_DT, TimerMode::Repeating)),
@@ -98,6 +100,20 @@ fn move_player(
         direction.y += 1.0;
     }
     if input.pressed(KeyCode::ArrowDown){
+        direction.y -= 1.0;
+    }
+
+    // wasd controls
+    if input.pressed(KeyCode::KeyA){
+        direction.x -= 1.0;
+    }
+    if input.pressed(KeyCode::KeyD){
+        direction.x += 1.0;
+    }
+    if input.pressed(KeyCode::KeyW){
+        direction.y += 1.0;
+    }
+    if input.pressed(KeyCode::KeyS){
         direction.y -= 1.0;
     }
 
@@ -151,14 +167,13 @@ fn animate_player(
     // compute target row and current position
     let target_row = row_zero_based(anim.facing);
     let mut current_col = atlas.index % WALK_FRAMES;
-    let mut current_row = atlas.index / WALK_FRAMES;
+    let current_row = atlas.index / WALK_FRAMES;
 
 
     // if the facing changed 
     if current_row != target_row {
         atlas.index = row_start_index(anim.facing);
         current_col = 0;
-        current_row = target_row;
         timer.reset();
     }
 
@@ -184,8 +199,11 @@ fn animate_player(
             }
         }
     } else if just_stopped {
-        // not moving: keep current frame to avoid snap. Reset timer on transition to idle
+        // not moving: Reset timer on transition to idle
         timer.reset();
+
+        // return to idle sprite 
+        atlas.index = row_start_index(anim.facing);
     }
 
     //update previous movement state
