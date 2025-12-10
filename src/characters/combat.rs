@@ -177,8 +177,8 @@ pub fn combat_input_and_turns(
     };
 
     use rand::Rng;
-    let mut rng = rand::thread_rng();
-    let mut rand01 = || rng.r#gen::<f32>();
+    let mut rng = rand::rng();
+    let mut rand01 = || rng.random::<f32>();
 
     // Turn resolution
     if active.players_turn {
@@ -330,7 +330,7 @@ pub fn spawn_combat_ui_on_start(
     mut clog: ResMut<CombatLog>,
 ) {
     if existing.iter().next().is_some() { return; }
-    let Some(active) = state.active.as_ref() else { return; };
+    let Some(_active) = state.active.as_ref() else { return; };
     let cam_pos = cam_q.single().map(|t| t.translation).unwrap_or(Vec3::ZERO);
     let base = Vec3::new(cam_pos.x, cam_pos.y - 220.0, 60.0);
 
@@ -502,7 +502,7 @@ pub fn handle_restart_input(
     mut pip_tracker: ResMut<crate::characters::health::HealthPipTracker>,
 ) {
     // Allow restarting with R at any time
-    let on_outcome = !matches!(*outcome, GameOutcome::None);
+    // let on_outcome = !matches!(*outcome, GameOutcome::None);
     let restart_pressed = input.just_pressed(KeyCode::KeyR);
         // add back to restart_pressed if we want to restart on space or enter
         // || (on_outcome && (input.just_pressed(KeyCode::Space) || input.just_pressed(KeyCode::Enter)));

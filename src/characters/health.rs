@@ -34,7 +34,7 @@ pub fn spawn_health_pips_once(
     }
 
     use rand::Rng;
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let map_size = map_pixel_dimensions();
     let half = map_size * 0.5;
 
@@ -64,8 +64,8 @@ pub fn spawn_health_pips_once(
         // find a valid location with several attempts
         let mut pos = None;
         for _ in 0..200 {
-            let x = rng.gen_range((-half.x + TILE_SIZE)..(half.x - TILE_SIZE));
-            let y = rng.gen_range((-half.y + TILE_SIZE)..(half.y - TILE_SIZE));
+            let x = rng.random_range((-half.x + TILE_SIZE)..(half.x - TILE_SIZE));
+            let y = rng.random_range((-half.y + TILE_SIZE)..(half.y - TILE_SIZE));
             let p = Vec2::new(x, y);
             if !would_collide(p) { pos = Some(p); break; }
         }

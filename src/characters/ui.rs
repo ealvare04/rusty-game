@@ -1,7 +1,7 @@
 // A simple UI/HUD showing player HP and controls
 use bevy::prelude::*;
 
-use crate::characters::combat::{CombatState, CombatStats, GameOutcome};
+use crate::characters::combat::{CombatState, CombatStats};
 use crate::characters::npc::Enemy;
 
 // Simple, always-on HUD showing player HP and controls
@@ -68,7 +68,7 @@ pub fn spawn_hud_once(
         TextColor(Color::WHITE),
         TextLayout { justify: Justify::Left, ..Default::default() },
         // Position on the left side of the screen, below the top bars
-        Transform::from_translation(Vec3::new(cam_pos.x - 300.0, cam_pos.y + 140.0, HUD_Z + 0.6)),
+        Transform::from_translation(Vec3::new(cam_pos.x - 360.0, cam_pos.y + 140.0, HUD_Z + 0.6)),
         HudControlsText,
     ));
 }
@@ -84,8 +84,6 @@ pub fn position_hud_to_camera(
         Query<&'static mut Transform, (With<HudEnemyHealthBg>, Without<HudRoot>, Without<HudHealthFill>, Without<HudEnemyHealthFill>, Without<Camera2d>)>,
         Query<&'static mut Transform, (With<HudControlsText>, Without<HudRoot>, Without<HudHealthFill>, Without<HudEnemyHealthFill>, Without<Camera2d>)>,
     )>,
-    state: Res<CombatState>,
-    outcome: Res<GameOutcome>,
 ) {
     let Ok(cam) = cam_q.single() else { return; };
     let cam_pos = cam.translation;
@@ -112,12 +110,9 @@ pub fn position_hud_to_camera(
     }
     if let Ok(mut tf) = transforms.p5().single_mut() { // controls (left column)
         // Position controls down and to the left from the top bars
-        let left_pos = Vec3::new(cam_pos.x - 300.0, cam_pos.y + 140.0, HUD_Z + 0.6);
+        let left_pos = Vec3::new(cam_pos.x - 360.0, cam_pos.y + 140.0, HUD_Z + 0.6);
         tf.translation = left_pos;
     }
-
-    // Optionally, we could hide HUD during combat/outcome; for now keep visible.
-    let _ = (state, outcome); // silence unused warnings if not used
 }
 
 // Update HUD HP bars (player always, enemy only during active combat)

@@ -62,7 +62,7 @@ pub fn spawn_enemies_once(
 
     // rng using rand crate
     use rand::Rng;
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
 
     // helper to test collision with solid or water tiles
     let would_collide = |point: Vec2| -> bool {
@@ -86,7 +86,7 @@ pub fn spawn_enemies_once(
     for _ in 0..ENEMIES_TO_SPAWN {
         // Pick a random character entry for variety
         let idx = if list.characters.len() > 1 {
-            rng.gen_range(0..list.characters.len())
+            rng.random_range(0..list.characters.len())
         } else { 0 };
         let enemy_entry: &CharacterEntry = &list.characters[idx];
 
@@ -106,8 +106,8 @@ pub fn spawn_enemies_once(
         // sample a valid ground position (not on water/non-walkable)
         let mut pos = Vec2::ZERO;
         for _attempt in 0..200 {
-            let x = rng.gen_range((-half.x + TILE_SIZE)..(half.x - TILE_SIZE));
-            let y = rng.gen_range((-half.y + TILE_SIZE)..(half.y - TILE_SIZE));
+            let x = rng.random_range((-half.x + TILE_SIZE)..(half.x - TILE_SIZE));
+            let y = rng.random_range((-half.y + TILE_SIZE)..(half.y - TILE_SIZE));
             let candidate = Vec2::new(x, y);
             if !would_collide(candidate) {
                 pos = candidate;
