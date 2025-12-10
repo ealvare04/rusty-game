@@ -1,6 +1,9 @@
 // src/map/rules.rs
+// Rules for how tiles are connected when building the map
+// from https://aibodh.com/posts/bevy-rust-game-development-chapter-2/
 use crate::map::assets::SpawnableAsset;
-use crate::map::collision::insert_blocking;
+// to use collision components
+use crate::map::collision::{insert_blocking, insert_water_blocking};
 use crate::map::models::TerrainModelBuilder;
 use crate::map::sockets::*;
 use bevy_procedural_tilemaps::prelude::*;
@@ -337,7 +340,7 @@ pub fn build_water_layer(
                 y_pos: terrain_sockets.water.material,
                 y_neg: terrain_sockets.water.material,
             },
-            vec![SpawnableAsset::new("water").with_components_spawner(insert_blocking)],
+            vec![SpawnableAsset::new("water").with_components_spawner(insert_water_blocking)],
         )
         .with_weight(10. * WATER_WEIGHT);
 
@@ -380,55 +383,55 @@ pub fn build_water_layer(
     // Create rotated versions of outer corners
     terrain_model_builder.create_model(
         water_corner_out.clone(),
-        vec![SpawnableAsset::new("water_corner_out_tl").with_components_spawner(insert_blocking)],
+        vec![SpawnableAsset::new("water_corner_out_tl").with_components_spawner(insert_water_blocking)],
     );
     terrain_model_builder.create_model(
         water_corner_out.rotated(ModelRotation::Rot90, Direction::ZForward),
-        vec![SpawnableAsset::new("water_corner_out_bl").with_components_spawner(insert_blocking)],
+        vec![SpawnableAsset::new("water_corner_out_bl").with_components_spawner(insert_water_blocking)],
     );
     terrain_model_builder.create_model(
         water_corner_out.rotated(ModelRotation::Rot180, Direction::ZForward),
-        vec![SpawnableAsset::new("water_corner_out_br").with_components_spawner(insert_blocking)],
+        vec![SpawnableAsset::new("water_corner_out_br").with_components_spawner(insert_water_blocking)],
     );
     terrain_model_builder.create_model(
         water_corner_out.rotated(ModelRotation::Rot270, Direction::ZForward),
-        vec![SpawnableAsset::new("water_corner_out_tr").with_components_spawner(insert_blocking)],
+        vec![SpawnableAsset::new("water_corner_out_tr").with_components_spawner(insert_water_blocking)],
     );
 
     // Create rotated versions of inner corners
     terrain_model_builder.create_model(
         water_corner_in.clone(),
-        vec![SpawnableAsset::new("water_corner_in_tl").with_components_spawner(insert_blocking)],
+        vec![SpawnableAsset::new("water_corner_in_tl").with_components_spawner(insert_water_blocking)],
     );
     terrain_model_builder.create_model(
         water_corner_in.rotated(ModelRotation::Rot90, Direction::ZForward),
-        vec![SpawnableAsset::new("water_corner_in_bl").with_components_spawner(insert_blocking)],
+        vec![SpawnableAsset::new("water_corner_in_bl").with_components_spawner(insert_water_blocking)],
     );
     terrain_model_builder.create_model(
         water_corner_in.rotated(ModelRotation::Rot180, Direction::ZForward),
-        vec![SpawnableAsset::new("water_corner_in_br").with_components_spawner(insert_blocking)],
+        vec![SpawnableAsset::new("water_corner_in_br").with_components_spawner(insert_water_blocking)],
     );
     terrain_model_builder.create_model(
         water_corner_in.rotated(ModelRotation::Rot270, Direction::ZForward),
-        vec![SpawnableAsset::new("water_corner_in_tr").with_components_spawner(insert_blocking)],
+        vec![SpawnableAsset::new("water_corner_in_tr").with_components_spawner(insert_water_blocking)],
     );
 
     // Create rotated versions of side edges
     terrain_model_builder.create_model(
         water_side.clone(),
-        vec![SpawnableAsset::new("water_side_t").with_components_spawner(insert_blocking)],
+        vec![SpawnableAsset::new("water_side_t").with_components_spawner(insert_water_blocking)],
     );
     terrain_model_builder.create_model(
         water_side.rotated(ModelRotation::Rot90, Direction::ZForward),
-        vec![SpawnableAsset::new("water_side_l").with_components_spawner(insert_blocking)],
+        vec![SpawnableAsset::new("water_side_l").with_components_spawner(insert_water_blocking)],
     );
     terrain_model_builder.create_model(
         water_side.rotated(ModelRotation::Rot180, Direction::ZForward),
-        vec![SpawnableAsset::new("water_side_b").with_components_spawner(insert_blocking)],
+        vec![SpawnableAsset::new("water_side_b").with_components_spawner(insert_water_blocking)],
     );
     terrain_model_builder.create_model(
         water_side.rotated(ModelRotation::Rot270, Direction::ZForward),
-        vec![SpawnableAsset::new("water_side_r").with_components_spawner(insert_blocking)],
+        vec![SpawnableAsset::new("water_side_r").with_components_spawner(insert_water_blocking)],
     );
 
     // Add connection rules
@@ -498,7 +501,8 @@ pub fn build_props_layer(
         vec![
             // bottom blocks movement
             SpawnableAsset::new("small_tree_bottom").with_components_spawner(insert_blocking),
-            SpawnableAsset::new("small_tree_top").with_grid_offset(GridDelta::new(0, 1, 0)),
+            // add top collision so canopies are solid too
+            SpawnableAsset::new("small_tree_top").with_grid_offset(GridDelta::new(0, 1, 0)).with_components_spawner(insert_blocking),
         ],
     );
 
@@ -516,7 +520,8 @@ pub fn build_props_layer(
             vec![
                 // bottom-left blocks movement
                 SpawnableAsset::new("big_tree_1_bl").with_components_spawner(insert_blocking),
-                SpawnableAsset::new("big_tree_1_tl").with_grid_offset(GridDelta::new(0, 1, 0)),
+                // add top collision
+                SpawnableAsset::new("big_tree_1_tl").with_grid_offset(GridDelta::new(0, 1, 0)).with_components_spawner(insert_blocking),
             ],
         )
         .with_weight(PROPS_WEIGHT);
@@ -534,7 +539,8 @@ pub fn build_props_layer(
             vec![
                 // bottom-right blocks movement
                 SpawnableAsset::new("big_tree_1_br").with_components_spawner(insert_blocking),
-                SpawnableAsset::new("big_tree_1_tr").with_grid_offset(GridDelta::new(0, 1, 0)),
+                // add top collision
+                SpawnableAsset::new("big_tree_1_tr").with_grid_offset(GridDelta::new(0, 1, 0)).with_components_spawner(insert_blocking),
             ],
         )
         .with_weight(PROPS_WEIGHT);
@@ -553,7 +559,8 @@ pub fn build_props_layer(
             vec![
                 // bottom-left blocks movement
                 SpawnableAsset::new("big_tree_2_bl").with_components_spawner(insert_blocking),
-                SpawnableAsset::new("big_tree_2_tl").with_grid_offset(GridDelta::new(0, 1, 0)),
+                // add top collision
+                SpawnableAsset::new("big_tree_2_tl").with_grid_offset(GridDelta::new(0, 1, 0)).with_components_spawner(insert_blocking),
             ],
         )
         .with_weight(PROPS_WEIGHT);
@@ -571,7 +578,8 @@ pub fn build_props_layer(
             vec![
                 // bottom-right blocks movement
                 SpawnableAsset::new("big_tree_2_br").with_components_spawner(insert_blocking),
-                SpawnableAsset::new("big_tree_2_tr").with_grid_offset(GridDelta::new(0, 1, 0)),
+                // add top collision
+                SpawnableAsset::new("big_tree_2_tr").with_grid_offset(GridDelta::new(0, 1, 0)).with_components_spawner(insert_blocking),
             ],
         )
         .with_weight(PROPS_WEIGHT);

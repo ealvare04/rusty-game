@@ -1,3 +1,5 @@
+// Defines what sockets a tile has, kind of like puzzle pieces
+// from https://aibodh.com/posts/bevy-rust-game-development-chapter-2/
 use bevy_procedural_tilemaps::prelude::*;
 
 pub struct TerrainSockets {

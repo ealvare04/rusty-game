@@ -1,5 +1,5 @@
 // Animation Engine
-
+// from https://aibodh.com/posts/bevy-rust-game-development-chapter-3/
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 use crate::characters::config::{CharacterEntry, AnimationType};
@@ -169,7 +169,11 @@ pub fn animate_characters(
         let just_started_jumping = state.is_jumping && !state.was_jumping;
         let just_stopped_jumping = !state.is_jumping && state.was_jumping;
 
-        let should_animate = state.is_jumping || state.is_moving;
+        // Attack/Death should animate even if entity is otherwise idle
+        let is_attack = matches!(animated.current_animation, AnimationType::Attack);
+        let is_death = matches!(animated.current_animation, AnimationType::Death);
+        
+        let should_animate = state.is_jumping || state.is_moving || is_attack || is_death;
         let animation_changed = just_started_moving || just_started_jumping
             || just_stopped_moving || just_stopped_jumping;
 
@@ -182,7 +186,14 @@ pub fn animate_characters(
             // Advance animation
             timer.tick(time.delta());
             if timer.just_finished() {
-                atlas.index = clip.next(atlas.index);
+                if is_attack || is_death {
+                    // Do not loop attack; stop on the last frame
+                    if atlas.index < clip.last {
+                        atlas.index = atlas.index + 1;
+                    }
+                } else {
+                    atlas.index = clip.next(atlas.index);
+                }
             }
         } else {
             // When idle (not moving or jumping), stay on frame 0
@@ -198,5 +209,31 @@ pub fn update_animation_flags(mut query: Query<&mut AnimationState>) {
     for mut state in query.iter_mut() {
         state.was_moving = state.is_moving;
         state.was_jumping = state.is_jumping;
+    }
+}
+
+// Revert transient Attack animation back to Walk when it reaches the last frame
+pub fn revert_attack_when_finished(
+    mut query: Query<(&mut AnimationController, &AnimationState, &AnimationTimer, &Sprite, &CharacterEntry)>,
+)
+{
+    for (mut controller, _state, timer, sprite, config) in query.iter_mut() {
+        if !matches!(controller.current_animation, AnimationType::Attack) { continue; }
+        
+        let atlas_opt = sprite.texture_atlas.as_ref();
+        if atlas_opt.is_none() { continue; }
+        let atlas = atlas_opt.unwrap();
+        
+        let def_opt = config.animations.get(&AnimationType::Attack);
+        if def_opt.is_none() { continue; }
+        let def = def_opt.unwrap();
+        
+        let row = if def.directional { def.start_row + controller.facing.direction_index() } else { def.start_row };
+        
+        let clip = AnimationClip::new(row, def.frame_count, config.atlas_columns);
+        // If timer tick finished and we are on the last frame, revert to Walk
+        if timer.0.is_finished() && atlas.index >= clip.last {
+            controller.current_animation = AnimationType::Walk;
+        }
     }
 }

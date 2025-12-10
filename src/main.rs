@@ -46,13 +46,18 @@ fn main(){
 
         // new character plugin
         .add_plugins(characters::CharactersPlugin)
+
+        /*
+        // streaming new chunks when walking out of frame
+        .add_plugins(MapStreamingPlugin)
+         */
         
         // registers startup function
         .add_systems(Startup, (setup_camera, setup_generator))
 
         // gives control to Bevy's main loop,
         // which polls input, runs the games systems, updates the world, and renders a frame.
-        // Loops until game is quit
+        // Loops until the game is quit
         .run();
 }
 

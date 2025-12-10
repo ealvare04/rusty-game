@@ -1,18 +1,28 @@
 // Movement System
+// from https://aibodh.com/posts/bevy-rust-game-development-chapter-3/
+// added collision handling, idle when combat starts, and player death handling
 
 use bevy::prelude::*;
-use crate::map::collision::NonWalkable;
+use crate::map::collision::{NonWalkable, Water, nonwalkable_half_extent, water_half_extent};
 use crate::map::generate::TILE_SIZE;
 use crate::characters::animation::*;
+use crate::characters::combat::{CombatState, GameOutcome};
 use crate::characters::config::{CharacterEntry, AnimationType};
 
 /// Read directional input and return a direction vector
 fn read_movement_input(input: &ButtonInput<KeyCode>) -> Vec2 {
-    const MOVEMENT_KEYS: [(KeyCode, Vec2); 4] = [
+    const MOVEMENT_KEYS: [(KeyCode, Vec2); 8] = [
+        /* Arrow keys controls */
         (KeyCode::ArrowLeft, Vec2::NEG_X),
         (KeyCode::ArrowRight, Vec2::X),
         (KeyCode::ArrowUp, Vec2::Y),
         (KeyCode::ArrowDown, Vec2::NEG_Y),
+
+        /* WASD controls */
+        (KeyCode::KeyW, Vec2::Y),
+        (KeyCode::KeyA, Vec2::NEG_X),
+        (KeyCode::KeyS, Vec2::NEG_Y),
+        (KeyCode::KeyD, Vec2::X),
     ];
 
     MOVEMENT_KEYS.iter()
@@ -39,6 +49,8 @@ pub struct Player;
 pub fn move_player(
     input: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
+    combat: Res<CombatState>,
+    outcome: Res<GameOutcome>,
     mut query: Query<(
         &mut Transform,
         &mut AnimationController,
@@ -46,10 +58,28 @@ pub fn move_player(
         &CharacterEntry,
     ), With<Player>>,
     blocking_tiles: Query<&GlobalTransform, With<NonWalkable>>,
+    water_tiles: Query<&GlobalTransform, With<Water>>,
 ) {
     let Ok((mut transform, mut animated, mut state, character)) = query.single_mut() else {
         return;
     };
+
+    // If currently playing a Death animation, disable movement entirely
+    if matches!(animated.current_animation, AnimationType::Death) {
+        state.is_moving = false;
+        return;
+    }
+
+    // When combat starts (or an outcome overlay is showing), force player to idle
+    // and disable further movement processing.
+    if combat.active.is_some() || !matches!(*outcome, GameOutcome::None) {
+        state.is_moving = false;
+        // Do not override Attack/Death animations while they are playing
+        if !state.is_jumping && !matches!(animated.current_animation, AnimationType::Death | AnimationType::Attack) {
+            animated.current_animation = AnimationType::Walk; // use Walk's idle frame as idle
+        }
+        return;
+    }
 
     let direction = read_movement_input(&input);
 
@@ -67,22 +97,34 @@ pub fn move_player(
         let move_speed = calculate_movement_speed(character, is_running);
         let delta = direction.normalize() * move_speed * time.delta_secs();
 
-        // Collision-aware movement: resolve per-axis against NonWalkable tiles
+        // Collision-aware movement with swept sub-steps to avoid tunneling
         let mut new_pos = transform.translation;
 
-        // Attempt X movement
-        if delta.x != 0.0 {
-            let candidate = Vec2::new(new_pos.x + delta.x, new_pos.y);
-            if !would_collide_point(candidate, &blocking_tiles) {
-                new_pos.x += delta.x;
-            }
-        }
+        // Determine number of sub-steps based on the maximum component
+        // Keep each step relatively small vs tile size to avoid skipping over thin obstacles
+        let max_component = delta.x.abs().max(delta.y.abs());
+        let max_step_len = TILE_SIZE * 0.20; // at most 20% of a tile per sub-step
+        let steps = if max_component > 0.0 {
+            (max_component / max_step_len).ceil().clamp(1.0, 8.0) as u32 // clamp to avoid perf issues
+        } else { 1 };
 
-        // Attempt Y movement
-        if delta.y != 0.0 {
-            let candidate = Vec2::new(new_pos.x, new_pos.y + delta.y);
-            if !would_collide_point(candidate, &blocking_tiles) {
-                new_pos.y += delta.y;
+        let step = Vec2::new(delta.x / steps as f32, delta.y / steps as f32);
+
+        for _ in 0..steps {
+            // Attempt X movement for this sub-step
+            if step.x != 0.0 {
+                let candidate = Vec2::new(new_pos.x + step.x, new_pos.y);
+                if !would_collide_point(candidate, &blocking_tiles, &water_tiles) {
+                    new_pos.x += step.x;
+                }
+            }
+
+            // Attempt Y movement for this sub-step
+            if step.y != 0.0 {
+                let candidate = Vec2::new(new_pos.x, new_pos.y + step.y);
+                if !would_collide_point(candidate, &blocking_tiles, &water_tiles) {
+                    new_pos.y += step.y;
+                }
             }
         }
 
@@ -138,16 +180,33 @@ pub fn update_jump_state(
     }
 }
 
-/// Check if a point would overlap any NonWalkable tile's AABB
-fn would_collide_point(point: Vec2, blocking_tiles: &Query<&GlobalTransform, With<NonWalkable>>) -> bool {
-    let half = TILE_SIZE * 0.5;
-    for gt in blocking_tiles.iter() {
+/// Check if a point would overlap any solid (NonWalkable) or Water tile's AABB
+fn would_collide_point(
+    point: Vec2,
+    solids: &Query<&GlobalTransform, With<NonWalkable>>,
+    waters: &Query<&GlobalTransform, With<Water>>,
+) -> bool {
+    // Solids: full half extent, inclusive test
+    let solid_half = nonwalkable_half_extent();
+    for gt in solids.iter() {
         let pos = gt.translation().truncate();
         let dx = (point.x - pos.x).abs();
         let dy = (point.y - pos.y).abs();
-        if dx <= half && dy <= half {
+        if dx <= solid_half && dy <= solid_half {
             return true;
         }
     }
+
+    // Water: slightly smaller half extent and strict inequality so edges on grass aren't blocked
+    let water_half = water_half_extent();
+    for gt in waters.iter() {
+        let pos = gt.translation().truncate();
+        let dx = (point.x - pos.x).abs();
+        let dy = (point.y - pos.y).abs();
+        if dx < water_half && dy < water_half {
+            return true;
+        }
+    }
+
     false
 }

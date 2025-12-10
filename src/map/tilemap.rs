@@ -1,3 +1,6 @@
+// Defines the tilemap sprites based on the tile image
+// found in assets/tile_layers/tilemap.png
+// from https://aibodh.com/posts/bevy-rust-game-development-chapter-2/
 use bevy::math::{URect, UVec2};
 
 pub struct TilemapSprite {

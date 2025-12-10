@@ -1,6 +1,8 @@
+// from https://aibodh.com/posts/bevy-rust-game-development-chapter-2/
+
 use bevy::prelude::*;
 use bevy_procedural_tilemaps::prelude::*;
-use crate::map::tilemap::TILEMAP; // <--- line update alert
+use crate::map::tilemap::TILEMAP;
 
 
 #[derive(Clone)]

@@ -1,4 +1,5 @@
 // src/map/generate.rs
+// from https://aibodh.com/posts/bevy-rust-game-development-chapter-2/
 use bevy_procedural_tilemaps::prelude::*;
 use bevy::prelude::*;
 
@@ -47,14 +48,13 @@ pub fn setup_generator(
     let grid = CartesianGrid::new_cartesian_3d(GRID_X, GRID_Y, GRID_Z, false, false, false);
 
     // 3. Configuring the Algorithm - Set up WFC behavior
-    // changed seed
     let gen_builder = GeneratorBuilder::new()
         .with_rules(rules)
         .with_grid(grid.clone())
         .with_rng(RngMode::Seeded(12345))
         .with_node_heuristic(NodeSelectionHeuristic::MinimumRemainingValue)
         .with_model_heuristic(ModelSelectionHeuristic::WeightedProbability);
-    
+
     let generator = gen_builder.build().unwrap();
 
     // 4. Loading Assets - Load sprite atlas and convert to renderable assets

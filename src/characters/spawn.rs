@@ -4,6 +4,7 @@ use bevy::prelude::*;
 use crate::characters::animation::*;
 use crate::characters::config::{CharacterEntry, CharactersList};
 use crate::characters::movement::Player;
+use crate::characters::combat::CombatStats;
 
 const PLAYER_SCALE: f32 = 0.8;
 const PLAYER_Z_POSITION: f32 = 20.0;
@@ -122,6 +123,7 @@ pub fn switch_character(
     mut query: Query<(
         &mut CharacterEntry,
         &mut Sprite,
+        &mut CombatStats,
     ), With<Player>>,
     mut atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     asset_server: Res<AssetServer>,
@@ -157,7 +159,7 @@ pub fn switch_character(
     character_index.index = new_index;
 
     // Update player entity
-    let Ok((mut current_entry, mut sprite)) = query.single_mut() else {
+    let Ok((mut current_entry, mut sprite, mut stats)) = query.single_mut() else {
         return;
     };
 
@@ -165,6 +167,16 @@ pub fn switch_character(
 
     // Update character entry
     *current_entry = character_entry.clone();
+
+    // Ensure CombatStats reflect the max health defined in the RON entry
+    // This guarantees combat uses the configured max health even after switching characters.
+    let new_max_hp = character_entry.max_health.max(1.0).round() as i32;
+    stats.max_hp = new_max_hp;
+    // Clamp/restore current HP to the new max; simplest is to set to max for a clean swap
+    stats.hp = new_max_hp;
+    // Also align player's attack to the character's configured attack_damage so
+    // player damage scales with the selected character. Keep a floor of 1.
+    stats.attack = character_entry.attack_damage.max(1.0).round() as i32;
 
     // Update sprite with new texture
     let texture = asset_server.load(&character_entry.texture_path);

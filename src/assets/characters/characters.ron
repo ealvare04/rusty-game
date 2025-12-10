@@ -1,10 +1,13 @@
-// like a json, but for rust
+// like a json, but for Rust
+// from https://aibodh.com/posts/bevy-rust-game-development-chapter-3/
+// added Attack and Death animation data, and attack damage attribute
 (
     characters: [
         (
         name: "male",
         // Character attributes
         max_health: 100.0,
+        attack_damage: 8.0,
         base_move_speed: 140.0,
         run_speed_multiplier: 1.8,
 
@@ -18,6 +21,20 @@
                 frame_count: 9,
                 frame_time: 0.1,
                 directional: true,
+            ),
+            Attack: (
+                // Rows 4-7 (0-indexed) in the character spritesheet show the attack animation for each facing
+                start_row: 4,
+                frame_count: 9,
+                frame_time: 0.08,
+                directional: true,
+            ),
+            Death: (
+                // Row 20 (0-indexed) in the character spritesheet shows the death animation
+                start_row: 20,
+                frame_count: 9,
+                frame_time: 0.1,
+                directional: false,
             ),
             Run: (
                 start_row: 38,
@@ -37,6 +54,7 @@
         name: "female",
         // Character attributes
         max_health: 95.0,
+        attack_damage: 7.0,
         base_move_speed: 150.0,
         run_speed_multiplier: 1.9,
 
@@ -50,6 +68,18 @@
                 frame_count: 9,
                 frame_time: 0.1,
                 directional: true,
+            ),
+            Attack: (
+                start_row: 4,
+                frame_count: 9,
+                frame_time: 0.08,
+                directional: true,
+            ),
+            Death: (
+                start_row: 20,
+                frame_count: 9,
+                frame_time: 0.1,
+                directional: false,
             ),
             Run: (
                 start_row: 38,
@@ -69,6 +99,7 @@
         name: "crimson_count",
         // Character attributes - vampire-like, fast and agile
         max_health: 120.0,
+        attack_damage: 12.0,
         base_move_speed: 180.0,
         run_speed_multiplier: 2.2,
 
@@ -82,6 +113,18 @@
                 frame_count: 9,
                 frame_time: 0.1,
                 directional: true,
+            ),
+            Attack: (
+                start_row: 4,
+                frame_count: 9,
+                frame_time: 0.08,
+                directional: true,
+            ),
+            Death: (
+                start_row: 20,
+                frame_count: 9,
+                frame_time: 0.1,
+                directional: false,
             ),
             Run: (
                 start_row: 38,
@@ -101,6 +144,7 @@
         name: "graveyard_reaper",
         // Character attributes - reaper, high health, moderate speed
         max_health: 150.0,
+        attack_damage: 14.0,
         base_move_speed: 120.0,
         run_speed_multiplier: 1.6,
 
@@ -114,6 +158,18 @@
                 frame_count: 9,
                 frame_time: 0.1,
                 directional: true,
+            ),
+            Attack: (
+                start_row: 4,
+                frame_count: 9,
+                frame_time: 0.08,
+                directional: true,
+            ),
+            Death: (
+                start_row: 20,
+                frame_count: 9,
+                frame_time: 0.1,
+                directional: false,
             ),
             Run: (
                 start_row: 38,
@@ -133,6 +189,7 @@
         name: "lantern_warden",
         // Character attributes - warden, high health, slower
         max_health: 140.0,
+        attack_damage: 10.0,
         base_move_speed: 110.0,
         run_speed_multiplier: 1.5,
 
@@ -146,6 +203,18 @@
                 frame_count: 9,
                 frame_time: 0.1,
                 directional: true,
+            ),
+            Attack: (
+                start_row: 4,
+                frame_count: 9,
+                frame_time: 0.08,
+                directional: true,
+            ),
+            Death: (
+                start_row: 20,
+                frame_count: 9,
+                frame_time: 0.1,
+                directional: false,
             ),
             Run: (
                 start_row: 38,
@@ -165,6 +234,7 @@
         name: "starlit_oracle",
         // Character attributes - oracle, lower health, faster
         max_health: 85.0,
+        attack_damage: 9.0,
         base_move_speed: 170.0,
         run_speed_multiplier: 2.1,
 
@@ -178,6 +248,18 @@
                 frame_count: 9,
                 frame_time: 0.1,
                 directional: true,
+            ),
+            Attack: (
+                start_row: 4,
+                frame_count: 9,
+                frame_time: 0.08,
+                directional: true,
+            ),
+            Death: (
+                start_row: 20,
+                frame_count: 9,
+                frame_time: 0.1,
+                directional: false,
             ),
             Run: (
                 start_row: 38,
