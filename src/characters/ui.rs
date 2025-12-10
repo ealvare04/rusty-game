@@ -110,7 +110,7 @@ pub fn position_hud_to_camera(
     }
     if let Ok(mut tf) = transforms.p5().single_mut() { // controls (left column)
         // Position controls down and to the left from the top bars
-        let left_pos = Vec3::new(cam_pos.x - 360.0, cam_pos.y + 140.0, HUD_Z + 0.6);
+        let left_pos = Vec3::new(cam_pos.x - 300.0, cam_pos.y + 140.0, HUD_Z + 0.6);
         tf.translation = left_pos;
     }
 }
